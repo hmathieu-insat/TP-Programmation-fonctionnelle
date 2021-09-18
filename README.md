@@ -3,7 +3,8 @@
 
 ## TP 2 - Introduction to OCaml functions and curryfication
 
-** Notions **
+**Notions**
+
 - Curried / Uncurried functions
 - Lambdas (Anonymous functions)
 - Parametric Polymorphism
