@@ -18,3 +18,21 @@
 - Higher-order functions
     - map
     - find
+
+## TP 3 - Pattern matching and inner let
+
+**Notions**
+
+- Basic pattern matching
+- Sequence
+- Inner let
+- Expressions and definitions
+
+## TP 4 - Type structures
+
+**Notions**
+
+- Records
+- Parameterized types
+- Arrays
+- Mutable records
