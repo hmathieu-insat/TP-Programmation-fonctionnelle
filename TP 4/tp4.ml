@@ -6,10 +6,10 @@
 type test =
     { (* A function which should be tested. *)
       fonc: (int -> int) ;
-
+      
       (* An argument, which will be given to the function. *) 
       arg: int ;
-
+      
       (* The expected result. *)
       expect: int }
 ;;
@@ -129,4 +129,257 @@ let test () =
 
 test ();;
 
+let r = ref 10;;
 
+!r;;
+
+r := 100;;
+!r;;
+
+(* - Exercise: references - *)
+let gen1 =
+  fun () -> 0
+;;
+
+let gen2 =
+  fun () ->
+  let count = ref 0 in
+    count := !count + 1 ;
+    !count
+;;
+
+let gen3 =
+  let count = ref 0 in
+    fun () ->
+      count := !count + 1 ;
+      !count
+;;
+
+
+gen1 ();;
+gen2();; gen2();; gen2();;
+gen3();;gen3();;gen3();;
+
+count := 5;;
+
+(* Impossible to modify count outisde of gen3 *)
+
+
+(* -- VARIANT DATATYPES *)
+
+type role = Player | Referee;;
+type color = White | Yellow | Green | Blue | Red;;
+
+type role = Player of color * int | Referee;;
+
+let role1 = Referee
+let role2 = Player (Green, 8)
+let role3 = Player (Yellow, 10)
+
+let get_number = function
+  | Referee -> 0
+  | Player (_, nb) -> nb
+
+
+type people =
+    { name: string ;
+      role: role ;
+      age: int }
+
+
+let pla = {name = "Playah" ; role = Player (White, 2) ; age = 23 };;
+let plou = {name = "Playouh" ; role = Player (Red, 15) ; age = 19 };;
+
+
+let get_col = function
+  | Player(_,_) -> true
+  | _ -> false
+;;
+
+
+let same_team a b =
+  match (a.role,b.role) with
+    | (Player(x,_) , Player(y,_)) ->
+        begin x == y end
+    | _ -> false
+;;
+
+same_team pla plou;;
+
+
+
+let is_number p n =
+  match p.role with
+    | Player (_, x) ->
+        begin x == n end
+    | _ -> false
+;;
+
+is_number pla 8;;
+
+
+type 'a mylist = Empty | Cell of 'a * 'a mylist
+
+
+(* -- PARAMETERIZED AND RECRUSIVE VARIANTS -- *)
+
+
+(* Returns the 1st element of a list *)
+let myhd = function 
+  | Empty -> failwith "empty list"
+  | Cell (a, _) -> a
+;;
+
+(* Returns the tail of list if possible *)
+let rec mytl = function
+  | Empty -> failwith "empty list"
+  | Cell(a, Empty) -> a
+  | Cell(a, c) -> mytl c
+;;
+
+(* Returns the length of a list w/o an accumulator *)
+let rec mylength = function 
+  | Empty -> 0
+  | Cell (a , c) -> 1 + mylength c
+;;
+
+(* Returns the length of a list using an acumulator *)
+let rec mylength1 acu = function
+  | Empty -> acu
+  | Cell (a, c) -> mylength (acu+1) c
+;;
+
+(* Returns the length of a list tail-recursively w/O accu *)
+(* let myLength2 1 =
+   let rec loop acu 1 =
+   function
+   | Empty -> acu
+   | Cell(a, c) -> loop (acu+1) 2
+   in
+   loop 0 *)
+
+(* - Exercise: Option type *)
+
+let l = [1;2;3]
+let t = [];;
+
+let ohd = function
+  | [] -> None
+  | x::_ -> Some x
+;;
+
+let rec otl = function
+  | [] -> None
+  | a::[] -> Some a
+  | a::l -> otl l
+
+;;
+
+ohd l;; ohd t;;
+otl l;;otl t;;
+
+
+(* -- EXERCISES ON LISTS -- *)
+
+(* - Exercise: AD-hoc functions *)
+type people =
+    { name: string ;
+      role: role ;
+      age: int }
+;;
+
+
+let rec get_referees = function
+  | [] -> []
+  | a::l -> 
+      begin match a.role with
+        | Referee -> a::(get_referees l)
+        | _ -> get_referees l
+      end 
+;;
+
+let tlist = [{name = "a" ; role = Referee ; age = 44} ; {name = "b" ; role = Player(Red, 2); age = 43} ; {name = "c" ;  role = Referee ; age = 66} ];;
+
+get_referees tlist;;
+(* Tested and functional *)
+
+let rec get_younger plist ag = 
+  match plist with
+    | [] -> []
+    | a::l ->
+        begin match a.age with
+          | z when (z <= ag) -> a::(get_younger l ag)
+          | _ -> get_younger l ag
+        end
+;;
+
+get_younger tlist 70;;
+(* Tested and functional *)
+
+
+let rec find_color plist col =
+  match plist with
+    | [] -> None
+    | p::l -> 
+        begin match p.role with
+          | Player(c,_) when c == col -> Some p
+          | _ -> find_color l col
+        end
+;;
+
+find_color tlist Red;;
+(* Tested and verified *)
+
+
+(* - Exercis: generic functions - *)
+let rec filter pred l = 
+  match l with
+    | [] -> []
+    | a::l -> 
+        begin match (pred a) with
+          | true -> a::(filter pred l)
+          | false -> filter pred l
+        end 
+;;
+
+filter (fun x -> x mod 2 = 0) [ 1 ; 2 ; 3 ; 4 ; 5 ; 6];;
+
+filter (fun x -> x < 10) [ 100 ; 5 ; 15 ; 6 ; 16 ; 7 ];;
+
+filter (fun x -> x < 0) [ 100 ; 5 ; 15 ; 6 ; 16 ; 7 ]
+;;
+
+
+let get_referees = filter (fun p -> p.role == Referee);;
+get_referees tlist;;
+
+let get_younger ag = filter (fun p -> p.age <  ag);;
+get_younger 70 tlist;;
+
+
+let rec find pred lst =
+  match lst with
+    | [] -> None
+    | a::l -> 
+        begin match (pred a) with
+          | true -> a
+          | false -> find pred l
+        end
+;;
+
+
+let has_color col p = 
+  match p.role with
+    | Player(c, _) when c == col -> true
+    | _ -> false
+;;
+
+let find_color col = (fun p -> (has_color col p)) ;;
+
+
+
+
+
+
+
+   
