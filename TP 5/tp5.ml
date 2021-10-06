@@ -140,4 +140,119 @@ forall (fun x -> x < 10) [];;
 
 
 (* - Exercise: Association lists -*)
+let assoc1 = [ ("Lucy", false) ; ("Mike", false) ; ("Hilary", false) ; ("Donald", true) ];;
 
+(* Researches value associated to key in list *)
+let rec assoc key = function
+  | [] -> raise Not_found
+  | hd::tl -> begin match hd with
+      | (k,v) when k = key -> v
+      | _ -> assoc key tl
+    end
+;;
+assoc "Donald" assoc1;;
+assoc "Mike" assoc1;;
+
+let a = [1;2];;
+1::a;;
+
+(* Remove key from assocation list *)
+let rec remove_assoc key lst =
+  match lst with
+    | [] -> []
+    | hd::tl -> begin match hd with
+        | (k,v) when k = key -> remove_assoc key tl
+        | _ -> hd::(remove_assoc key tl)
+      end
+;;
+
+remove_assoc "Donald" assoc1;;
+
+
+(** --- TREES --- **)
+
+type 'a tree = Leaf of 'a | Node of 'a tree * 'a tree;;
+
+(* Returns the max depth of tree*)
+let rec depth tree =
+  match tree with 
+    | Leaf(_) -> 0
+    | Node(a,_) -> 1 + (depth a)
+;;
+depth (Leaf 100);;
+depth (Node (Leaf 100, Leaf 200));;
+
+(*Builds a tree of n depth and x value in leaves *)
+let rec build n x =
+  match n with
+    | 0 -> Leaf x
+    | _ -> Node (build (n-1) x , build (n-1) x)
+;;
+let t = build 5 3;;
+depth t;;
+
+let print_tree tos tree =
+  let rec loop margin = function
+    | Leaf x -> Printf.printf "___ %s\n%!" (tos x)
+    | Node (a,b) ->
+        Printf.printf "____" ;
+        loop (margin ^ "|   ") a ;
+        Printf.printf "%s|\n%s|" margin margin ;
+        loop (margin ^ "    ") b
+  in
+    loop "   " tree
+;;
+print_tree string_of_int t;;
+
+
+let build_fold n init f =
+  let rec aux n x =
+    match n with
+      | 0 -> (Leaf x, f x)
+      | _ -> let (g,j) = aux (n-1) x in
+          let (d,k) = aux (n-1) j in
+            (Node (g,d), k)
+  in
+  let (a,_) = aux n init in
+    a
+;;
+
+let tree1 = build_fold 3 10 (fun x -> x+2);;
+print_tree string_of_int tree1;;
+
+
+let tree2 = build_fold 2 "o" ( fun x -> "(" ^ x ^ ")" );;
+
+
+let rec tmap f = function
+  | Leaf x -> Leaf (f x)
+  | Node (a,b) -> Node(tmap f a, tmap f b)
+;;
+
+
+let rec tfind pred = function
+  | Leaf x -> begin match pred x with
+      | true -> Some x
+      | false -> None
+    end
+  | Node (a,b) -> if Option.is_some(tfind pred a) then tfind pred a else tfind pred b
+;;
+tfind (fun x -> x == 20) tree1;;
+
+
+let rec contains v = function
+  | Leaf x -> if x == v then true else false
+  | Node (a,b) -> if contains v a then contains v a else contains v b
+;;
+contains 22 tree1;;
+
+
+let rec replace pred sub tree =
+  if pred tree then sub else match tree with
+    | Leaf x -> Leaf x
+    | Node (a,b) -> Node(replace pred sub a, replace pred sub b)
+;;
+
+let t1 =replace (fun t -> contains 14 t && depth t = 1) (Leaf 0) tree1;;
+let pt = print_tree string_of_int;;
+pt t1;;
